@@ -84,10 +84,24 @@ diff.htlm
   let isJumping = false;
 
   document.addEventListener("keydown", function(e) {
-    if (e.code === "Space" && !isJumping) {
-      jump();
-    }
-  });
+
+  // SAUT : flèche du haut
+  if (e.code === "ArrowUp" && !isJumping) {
+    jump();
+  }
+
+  // SE BAISSER : flèche du bas
+  if (e.code === "ArrowDown") {
+    player.classList.add("down");
+  }
+});
+
+document.addEventListener("keyup", function(e) {
+  if (e.code === "ArrowDown") {
+    player.classList.remove("down");
+  }
+});
+
 
   function jump() {
     isJumping = true;
