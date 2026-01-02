@@ -1,141 +1,173 @@
-diff.htlm
 <!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
 <title>Mini Subway Runner</title>
+
 <style>
-  body {
-    margin: 0;
-    background: #222;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    color: white;
-    font-family: Arial;
-  }
+body {
+  margin: 0;
+  background: #222;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  color: white;
+  font-family: Arial, sans-serif;
+}
 
-  #game {
-    width: 400px;
-    height: 200px;
-    background: #333;
-    position: relative;
-    overflow: hidden;
-    border: 3px solid white;
-  }
+#game {
+  width: 400px;
+  height: 200px;
+  background: #333;
+  position: relative;
+  overflow: hidden;
+  border: 3px solid white;
+}
 
-  #player {
-    width: 40px;
-    height: 40px;
-    background: dodgerblue;
-    position: absolute;
-    bottom: 0;
-    left: 50px;
-    .down {
+#score {
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  font-size: 16px;
+  z-index: 2;
+}
+
+#player {
+  width: 40px;
+  height: 40px;
+  background: dodgerblue;
+  position: absolute;
+  bottom: 0;
+  left: 50px;
+}
+
+#player.down {
   height: 20px;
   background: lightblue;
 }
 
-  }
+.jump {
+  animation: jump 0.5s;
+}
 
-  .jump {
-    animation: jump 0.5s;
-  }
+@keyframes jump {
+  0% { bottom: 0; }
+  50% { bottom: 80px; }
+  100% { bottom: 0; }
+}
 
-  @keyframes jump {
-    0% { bottom: 0; }
-    50% { bottom: 80px; }
-    100% { bottom: 0; }
-  }
+#obstacle {
+  width: 30px;
+  height: 50px;
+  background: red;
+  position: absolute;
+  bottom: 0;
+  left: 400px;
+  animation: obstacle 1.5s linear infinite;
+}
 
-  #obstacle {
-    width: 30px;
-    height: 50px;
-    background: red;
-    position: absolute;
-    bottom: 0;
-    left: 400px;
-    animation: obstacle 1.5s linear infinite;
-  }
+@keyframes obstacle {
+  from { left: 400px; }
+  to { left: -40px; }
+}
 
-  @keyframes obstacle {
-    0% { left: 400px; }
-    100% { left: -40px; }
-  }
-
-  #score {
-    position: absolute;
-    top: 5px;
-    left: 5px;
-    font-size: 16px;
-  }
+#gameOver {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  font-size: 24px;
+  z-index: 3;
+}
 </style>
 </head>
 
 <body>
-  <div id="game">
-    <div id="score">Score : 0</div>
-    <div id="player"></div>
-    <div id="obstacle"></div>
+
+<div id="game">
+  <div id="score">Score : 0</div>
+  <div id="player"></div>
+  <div id="obstacle"></div>
+  <div id="gameOver">
+    💥 GAME OVER<br><br>
+    Appuie sur ESPACE
   </div>
+</div>
 
 <script>
-  const player = document.getElementById("player");
-  const obstacle = document.getElementById("obstacle");
-  const scoreText = document.getElementById("score");
+const player = document.getElementById("player");
+const obstacle = document.getElementById("obstacle");
+const scoreText = document.getElementById("score");
+const gameOverScreen = document.getElementById("gameOver");
 
-  let score = 0;
-  let isJumping = false;
+let score = 0;
+let isJumping = false;
+let gameOver = false;
 
-  document.addEventListener("keydown", function(e) {
-
-  // SAUT : flèche du haut
-  if (e.code === "ArrowUp" && !isJumping) {
+document.addEventListener("keydown", e => {
+  if (e.code === "ArrowUp" && !isJumping && !gameOver) {
     jump();
   }
 
-  // SE BAISSER : flèche du bas
   if (e.code === "ArrowDown") {
     player.classList.add("down");
   }
+
+  if (e.code === "Space" && gameOver) {
+    restart();
+  }
 });
 
-document.addEventListener("keyup", function(e) {
+document.addEventListener("keyup", e => {
   if (e.code === "ArrowDown") {
     player.classList.remove("down");
   }
 });
 
+function jump() {
+  isJumping = true;
+  player.classList.add("jump");
 
-  function jump() {
-    isJumping = true;
-    player.classList.add("jump");
+  setTimeout(() => {
+    player.classList.remove("jump");
+    isJumping = false;
+  }, 500);
+}
 
-    setTimeout(() => {
-      player.classList.remove("jump");
-      isJumping = false;
-    }, 500);
+setInterval(() => {
+  if (gameOver) return;
+
+  let playerBottom = parseInt(getComputedStyle(player).bottom);
+  let obstacleLeft = parseInt(getComputedStyle(obstacle).left);
+
+  if (obstacleLeft < 90 && obstacleLeft > 50 && playerBottom < 40) {
+    endGame();
   }
+}, 10);
 
-  setInterval(() => {
-    let playerBottom = parseInt(
-      window.getComputedStyle(player).getPropertyValue("bottom")
-    );
-    let obstacleLeft = parseInt(
-      window.getComputedStyle(obstacle).getPropertyValue("left")
-    );
-
-    if (obstacleLeft < 90 && obstacleLeft > 50 && playerBottom < 40) {
-      alert("💥 Game Over ! Score : " + score);
-      score = 0;
-    }
-  }, 10);
-
-  setInterval(() => {
+setInterval(() => {
+  if (!gameOver) {
     score++;
     scoreText.innerText = "Score : " + score;
-  }, 200);
+  }
+}, 200);
+
+function endGame() {
+  gameOver = true;
+  gameOverScreen.style.display = "flex";
+}
+
+function restart() {
+  score = 0;
+  scoreText.innerText = "Score : 0";
+  gameOver = false;
+  gameOverScreen.style.display = "none";
+}
 </script>
+
 </body>
 </html>
